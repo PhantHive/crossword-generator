@@ -161,7 +161,12 @@ class CrosswordCreator():
         crossword variable); return False otherwise.
         """
 
-        raise NotImplementedError
+        if len(assignment) == len(self.crossword.variables):
+            for var in self.crossword.variables:
+                assignment[var] = self.domains[var]
+            return True
+        return False
+
 
     def consistent(self, assignment):
         """
@@ -169,7 +174,20 @@ class CrosswordCreator():
         puzzle without conflicting characters); return False otherwise.
         """
 
-        raise NotImplementedError
+        # we check first if all values are distinct
+        for value in assignment:
+            if len(set(assignment.values())) != len(assignment):
+                return False
+            # we check if the length of the word is correct
+            if value.length != len(assignment[value]):
+                return False
+            # we check if there are no conflicts between the neighbors variables
+            for neighbor in self.crossword.neighbors(value):
+                if neighbor in assignment:
+                    if assignment[value][value.direction] != assignment[neighbor][neighbor.direction]:
+                        return False
+        return True
+
 
     def order_domain_values(self, var, assignment):
         """
