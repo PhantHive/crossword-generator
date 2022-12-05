@@ -154,7 +154,6 @@ class CrosswordCreator():
                             arcs.append((z, x))
         return True
 
-
     def assignment_complete(self, assignment):
         """
         Return True if `assignment` is complete (i.e., assigns a value to each
@@ -166,7 +165,6 @@ class CrosswordCreator():
                 assignment[var] = self.domains[var]
             return True
         return False
-
 
     def consistent(self, assignment):
         """
@@ -181,13 +179,16 @@ class CrosswordCreator():
             # we check if the length of the word is correct
             if value.length != len(assignment[value]):
                 return False
-            # we check if there are no conflicts between the neighbors variables
-            for neighbor in self.crossword.neighbors(value):
-                if neighbor in assignment:
-                    if assignment[value][value.direction] != assignment[neighbor][neighbor.direction]:
-                        return False
-        return True
 
+            # we check if the word is not in the same row or column
+
+            for var in assignment:
+                if var != value:
+                    if var.direction == value.direction:
+                        if var.i == value.i or var.j == value.j:
+                            return False
+
+        return True
 
     def order_domain_values(self, var, assignment):
         """
@@ -208,7 +209,31 @@ class CrosswordCreator():
         return values.
         """
 
-        raise NotImplementedError
+        for var in self.crossword.variables:
+            # if not in assignment, we can process verifications
+            if var not in assignment:
+                # we check the domain of the variable
+                if len(self.domains[var]) == 1:
+                    return var
+                # we choose the variable with minimum number of remaining values in its domain
+                if len(self.domains[var]) < len(self.domains[self.crossword.neighbors(var)]):
+                    return var
+                # if it's tie, we choose the variable with the highest degree
+                min_value = None
+                if len(self.domains[var]) == len(self.domains[self.crossword.neighbors(var)]):
+                    for neighbor in self.crossword.neighbors(var):
+                        for neighbor2 in self.crossword.neighbors(var):
+                            if neighbor != neighbor2:
+                                if len(self.domains[neighbor]) < len(self.domains[neighbor2]):
+                                    min_value = neighbor
+                                else:
+                                    min_value = neighbor2
+                    return min_value
+
+        return None
+
+
+
 
     def backtrack(self, assignment):
         """
@@ -220,7 +245,24 @@ class CrosswordCreator():
         If no assignment is possible, return None.
         """
 
-        raise NotImplementedError
+        # checking if we can return a complete assignment
+        if self.assignment_complete(assignment):
+            return assignment
+
+        # we select an unassigned variable
+        var = self.select_unassigned_variable(assignment)
+        if var is None:
+            return None
+
+        for value in self.domains[var]:
+            # we select a value for the unassigned variable
+            assignment[var] = value
+            if self.consistent(assignment):
+                res = self.backtrack(assignment)
+                if res is not None:
+                    return res
+            del assignment[var]
+        return None
 
 
 def main():
