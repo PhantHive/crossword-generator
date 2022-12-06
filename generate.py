@@ -116,11 +116,15 @@ class CrosswordCreator():
         False if no revision was made.
         """
 
-        for value in self.domains[x]:
-            if value not in self.domains[y]:
-                self.domains[x].remove(value)
-                return True
-        return False
+        # revise with overlaps
+        revised = False
+        overlap = self.crossword.overlaps[x, y]
+
+        for x_var in self.domains[x].copy():
+            if all(x_var[overlap[0]] != y_var[overlap[1]] for y_var in self.domains[y]):
+                self.domains[x].remove(x_var)
+                revised = True
+        return revised
 
     def ac3(self, arcs=None):
         """
@@ -160,11 +164,10 @@ class CrosswordCreator():
         crossword variable); return False otherwise.
         """
 
-        if len(assignment) == len(self.crossword.variables):
-            for var in self.crossword.variables:
-                assignment[var] = self.domains[var]
-            return True
-        return False
+        for var in self.domains:
+            if var not in assignment:
+                return False
+        return True
 
     def consistent(self, assignment):
         """
@@ -172,19 +175,19 @@ class CrosswordCreator():
         puzzle without conflicting characters); return False otherwise.
         """
 
-        # we check first if all values are distinct
-        for value in assignment:
-            if len(set(assignment.values())) != len(assignment):
-                return False
-            # we check if the length of the word is correct
-            if value.length != len(assignment[value]):
+        for var in assignment:
+            if len(assignment[var]) != var.length:
                 return False
 
-            # we check if the word is not in the same place as another word
-            for var in assignment:
-                if var != value:
-                    if var.direction == value.direction:
-                        if var.i == value.i or var.j == value.j:
+            # we check the neighbors of the variable to make sure that they are consistent (no conflict: overlaps)
+            for neighbor in self.crossword.neighbors(var):
+                if neighbor in assignment:
+                    if assignment[var] == assignment[neighbor]:
+                        return False
+
+                    if self.crossword.overlaps[var, neighbor]:
+                        x, y = self.crossword.overlaps[var, neighbor]
+                        if assignment[var][x] != assignment[neighbor][y]:
                             return False
 
         return True
@@ -197,23 +200,18 @@ class CrosswordCreator():
         that rules out the fewest values among the neighbors of `var`.
         """
 
-        if (var is None) or (assignment is None):
-            return None
-
-        print(var)
-
-        domain_values = []
-        # using the heuristic of the least constraining value
+        values_var_domain = []
         for value in self.domains[var]:
-            count = 0
+            cnt = 0
             for neighbor in self.crossword.neighbors(var):
-                if value not in self.domains[neighbor]:
-                    count += 1
-            domain_values.append((value, count))
-        domain_values.sort(key=lambda x: x[1])
-        return domain_values
+                if neighbor not in assignment:
+                    for neighbor_value in self.domains[neighbor]:
+                        if neighbor_value != value:
+                            cnt += 1
 
-
+            values_var_domain.append((cnt, value))
+        values_var_domain.sort()
+        return [value for count, value in values_var_domain]
 
     def select_unassigned_variable(self, assignment):
         """
@@ -233,7 +231,8 @@ class CrosswordCreator():
                 if len(min_values) == 1:
                     return var
                 else:
-                    # there is a tie, choose the variable with the highest degree considering min_values is a list of tuples of value and count
+                    # there is a tie, choose the variable with the highest degree considering min_values is a list of
+                    # tuples of value and count
                     max_deg = 0
                     max_deg_var = 0
                     for value in min_values:
@@ -244,11 +243,8 @@ class CrosswordCreator():
                         if degree > max_deg:
                             max_deg = degree
                             max_deg_var = var
+
                     return max_deg_var
-
-
-
-
 
     def backtrack(self, assignment):
         """
@@ -276,7 +272,7 @@ class CrosswordCreator():
                 res = self.backtrack(assignment)
                 if res is not None:
                     return res
-            assignment.pop(unassigned_var)
+
         return None
 
 
