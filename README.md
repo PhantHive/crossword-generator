@@ -29,7 +29,7 @@
 
 ### Branches
 
-- [x] [master] - Main branch
+- [x] [main] - Main branch (stable branch)
 - [x] [test] - Development branch
 
 ### Purpose
