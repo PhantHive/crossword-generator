@@ -9,7 +9,6 @@
 ---
 
 
-
 <a href="https://heroku.com/">
 <img src="https://img.shields.io/badge/SCHOOL-RTU-darkgreen.svg?style=for-the-badge">
 </a>
@@ -29,7 +28,8 @@
 
 ### Branches
 
-- [x] [main] - Main branch (stable branch)
+- [x] [stable] - Stable branch
+- [x] [main] - Main branch
 - [x] [test] - Development branch
 
 ### Purpose
