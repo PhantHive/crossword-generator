@@ -4,10 +4,7 @@
 
 <img src="https://imgur.com/ln1k2uh.png" alt="crossword_demo"/>
 
-
-
 ---
-
 
 <a href="https://heroku.com/">
 <img src="https://img.shields.io/badge/SCHOOL-RTU-darkgreen.svg?style=for-the-badge">
@@ -24,7 +21,6 @@
 </a>
 
 </div>
-
 
 ### Branches
 
@@ -48,7 +44,7 @@ Those smarts algorithms are the AC3 studied in class as well as the backtracking
 > Supervised by **Prof. Aleksejs Jurenoks** (Professor at RTU)
 > Project Link: [https://github.com/PhantHive/crossword](https://github.com/PhantHive/crossword/)
 
-
 <!-- MARKDOWN LINKS & IMAGES -->
+
 [issues-shield]: https://img.shields.io/github/issues/PhantHive/crossword.svg?style=for-the-badge&logo=github
 [issues-url]: https://github.com/PhantHive/crossword/issues/
