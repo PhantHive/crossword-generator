@@ -180,8 +180,7 @@ class CrosswordCreator():
             if value.length != len(assignment[value]):
                 return False
 
-            # we check if the word is not in the same row or column
-
+            # we check if the word is not in the same place as another word
             for var in assignment:
                 if var != value:
                     if var.direction == value.direction:
@@ -198,7 +197,23 @@ class CrosswordCreator():
         that rules out the fewest values among the neighbors of `var`.
         """
 
-        raise NotImplementedError
+        if (var is None) or (assignment is None):
+            return None
+
+        print(var)
+
+        domain_values = []
+        # using the heuristic of the least constraining value
+        for value in self.domains[var]:
+            count = 0
+            for neighbor in self.crossword.neighbors(var):
+                if value not in self.domains[neighbor]:
+                    count += 1
+            domain_values.append((value, count))
+        domain_values.sort(key=lambda x: x[1])
+        return domain_values
+
+
 
     def select_unassigned_variable(self, assignment):
         """
@@ -210,27 +225,27 @@ class CrosswordCreator():
         """
 
         for var in self.crossword.variables:
-            # if not in assignment, we can process verifications
             if var not in assignment:
-                # we check the domain of the variable
-                if len(self.domains[var]) == 1:
-                    return var
-                # we choose the variable with minimum number of remaining values in its domain
-                if len(self.domains[var]) < len(self.domains[self.crossword.neighbors(var)]):
-                    return var
-                # if it's tie, we choose the variable with the highest degree
-                min_value = None
-                if len(self.domains[var]) == len(self.domains[self.crossword.neighbors(var)]):
-                    for neighbor in self.crossword.neighbors(var):
-                        for neighbor2 in self.crossword.neighbors(var):
-                            if neighbor != neighbor2:
-                                if len(self.domains[neighbor]) < len(self.domains[neighbor2]):
-                                    min_value = neighbor
-                                else:
-                                    min_value = neighbor2
-                    return min_value
 
-        return None
+                min_values = self.order_domain_values(var, assignment)
+                if len(min_values) == 0:
+                    return None
+                if len(min_values) == 1:
+                    return var
+                else:
+                    # there is a tie, choose the variable with the highest degree considering min_values is a list of tuples of value and count
+                    max_deg = 0
+                    max_deg_var = 0
+                    for value in min_values:
+                        degree = 0
+                        for neighbor in self.crossword.neighbors(var):
+                            if value[0] not in self.domains[neighbor]:
+                                degree += 1
+                        if degree > max_deg:
+                            max_deg = degree
+                            max_deg_var = var
+                    return max_deg_var
+
 
 
 
@@ -245,23 +260,23 @@ class CrosswordCreator():
         If no assignment is possible, return None.
         """
 
-        # checking if we can return a complete assignment
         if self.assignment_complete(assignment):
             return assignment
 
-        # we select an unassigned variable
-        var = self.select_unassigned_variable(assignment)
-        if var is None:
+        unassigned_var = self.select_unassigned_variable(assignment)
+
+        if unassigned_var is None:
             return None
 
-        for value in self.domains[var]:
-            # we select a value for the unassigned variable
-            assignment[var] = value
+        for value in self.order_domain_values(unassigned_var, assignment):
+            assignment[unassigned_var] = value
+
+            # checking consistency of the assignment
             if self.consistent(assignment):
                 res = self.backtrack(assignment)
                 if res is not None:
                     return res
-            del assignment[var]
+            assignment.pop(unassigned_var)
         return None
 
 
